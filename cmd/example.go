@@ -3,6 +3,7 @@ package cmd
 import (
 	"bytes"
 	"fmt"
+	"log/slog"
 
 	"github.com/spf13/cobra"
 	"github.com/yuin/goldmark"
@@ -26,6 +27,8 @@ var exampleCmd = &cobra.Command{
 		}
 
 		fmt.Println(buf.String())
+
+		slog.Info("This is a log message")
 
 		return nil
 	},
