@@ -2,15 +2,20 @@ package devserver
 
 import (
 	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
+	"path"
 
 	"github.com/labstack/echo/v4"
 	slogecho "github.com/samber/slog-echo"
+
+	"github.com/fogo-sh/almanac/pkg/content"
 )
 
 type Config struct {
-	Addr string
+	Addr       string
+	ContentDir string
 }
 
 type Server struct {
@@ -26,13 +31,26 @@ func (s *Server) Start() error {
 	return nil
 }
 
+func (s *Server) servePage(c echo.Context) error {
+	file, err := content.ParseFile(path.Join(s.config.ContentDir, c.Param("page")+".md"))
+	if err != nil {
+		return fmt.Errorf("error processing file: %w", err)
+	}
+
+	return c.HTMLBlob(http.StatusOK, file.ParsedContent)
+}
+
 func NewServer(config Config) *Server {
 	echoInst := echo.New()
 
 	echoInst.Use(slogecho.New(slog.Default()))
 
-	return &Server{
+	server := &Server{
 		echoInst: echoInst,
 		config:   config,
 	}
+
+	echoInst.GET("/:page", server.servePage)
+
+	return server
 }

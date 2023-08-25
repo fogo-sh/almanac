@@ -12,7 +12,8 @@ var serveCmd = &cobra.Command{
 	Short: "Start the Almanac dev server",
 	Run: func(cmd *cobra.Command, args []string) {
 		server := devserver.NewServer(devserver.Config{
-			Addr: must(cmd.Flags().GetString("addr")),
+			Addr:       must(cmd.Flags().GetString("addr")),
+			ContentDir: must(cmd.Flags().GetString("content-dir")),
 		})
 		err := server.Start()
 		checkError(err, "failed to start dev server")
