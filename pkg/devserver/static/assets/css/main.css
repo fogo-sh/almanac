@@ -1,0 +1,17 @@
+:root {
+  --bg: #f8f9fa;
+}
+
+* {
+  box-sizing: border-box;
+  font-family: "Linux Libertine", "Georgia", "Times", serif;
+}
+
+body {
+  background-color: var(--bg);
+  padding: 1rem;
+}
+
+body > :first-child {
+  margin-top: 0;
+}
