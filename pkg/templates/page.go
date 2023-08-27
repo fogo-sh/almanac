@@ -6,6 +6,7 @@ type PageTemplateData struct {
 	AllPageTitles []string
 	Title         string
 	Content       template.HTML
+	Backlinks     []string
 }
 
 var pageTemplateContent = `<!DOCTYPE html>
@@ -25,6 +26,16 @@ var pageTemplateContent = `<!DOCTYPE html>
 		<main>
 			<h1>{{ .Title }}</h1>
 			{{ .Content }}
+			{{ if .Backlinks }}
+				<section>
+					<h2>Backlinks</h2>
+					<ul>
+					{{ range .Backlinks }}
+						<li><a href="/{{ . }}">{{ . }}</a></li>
+					{{ end }}
+					</ul>
+				</section>
+			{{ end }}
 		</main>
 	</body>
 </html>`
