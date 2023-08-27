@@ -1,7 +1,6 @@
 package devserver
 
 import (
-	"embed"
 	"errors"
 	"fmt"
 	"html/template"
@@ -16,6 +15,8 @@ import (
 	slogecho "github.com/samber/slog-echo"
 
 	"github.com/fogo-sh/almanac/pkg/content"
+	"github.com/fogo-sh/almanac/pkg/static"
+	"github.com/fogo-sh/almanac/pkg/templates"
 )
 
 type Config struct {
@@ -37,38 +38,6 @@ func (s *Server) Start() error {
 	return nil
 }
 
-type PageTemplate struct {
-	Title   string
-	Content string
-}
-
-var pageTemplateContent = `<!DOCTYPE html>
-<html>
-	<head>
-		<title>{{ .Title }}</title>
-		<link rel="stylesheet" href="/assets/css/main.css">
-	</head>
-	<body>
-		<h1>{{ .Title }}</h1>
-		{{ .Content }}
-	</body>
-</html>`
-
-var pageTemplate *template.Template
-
-type PageData struct {
-	Title   string
-	Content template.HTML
-}
-
-func init() {
-	t, err := template.New("page").Parse(pageTemplateContent)
-	if err != nil {
-		panic(err)
-	}
-	pageTemplate = t
-}
-
 type Renderer struct{}
 
 func (r *Renderer) Render(w io.Writer, name string, data interface{}, c echo.Context) error {
@@ -76,11 +45,11 @@ func (r *Renderer) Render(w io.Writer, name string, data interface{}, c echo.Con
 		return fmt.Errorf("unknown template: %s", name)
 	}
 
-	return pageTemplate.Execute(w, data)
+	return templates.PageTemplate.Execute(w, data)
 }
 
 func serveNotFound(c echo.Context) error {
-	return c.Render(http.StatusNotFound, "page", PageData{
+	return c.Render(http.StatusNotFound, "page", templates.PageTemplateData{
 		Title:   "Not found!",
 		Content: template.HTML("<p>Looks like this page doesn't exist yet</p>"),
 	})
@@ -103,27 +72,26 @@ func (s *Server) servePage(c echo.Context) error {
 		return fmt.Errorf("error processing file: %w", err)
 	}
 
-	return c.Render(http.StatusOK, "page", PageData{
+	return c.Render(http.StatusOK, "page", templates.PageTemplateData{
 		Title:   page,
 		Content: template.HTML(string(file.ParsedContent)),
 	})
 }
-
-//go:embed static
-var staticFS embed.FS
 
 func NewServer(config Config) *Server {
 	echoInst := echo.New()
 
 	var configuredFrontendFS http.FileSystem
 	if config.UseBundledAssets {
-		configuredFrontendFS = http.FS(staticFS)
+		configuredFrontendFS = http.FS(static.StaticFS)
 	} else {
-		configuredFrontendFS = http.Dir("./pkg/devserver/static/")
+		configuredFrontendFS = http.Dir("./pkg/static/")
 	}
 
+	println(config.UseBundledAssets)
+
 	echoInst.Use(middleware.StaticWithConfig(middleware.StaticConfig{
-		Root:       ".",
+		Root:       "./static/",
 		Index:      "index.html",
 		Browse:     false,
 		HTML5:      true,
