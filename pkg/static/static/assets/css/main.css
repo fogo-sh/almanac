@@ -8,10 +8,23 @@
 }
 
 body {
+  max-width: 80rem;
+  margin: 0 auto;
+  display: flex;
+  gap: 1rem;
   background-color: var(--bg);
   padding: 1rem;
 }
 
 body > :first-child {
   margin-top: 0;
+}
+
+nav {
+  padding-top: 4rem;
+  width: 20rem;
+}
+
+main {
+  width: 100%;
 }

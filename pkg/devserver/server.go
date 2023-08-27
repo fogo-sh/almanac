@@ -7,8 +7,6 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
-	"os"
-	"path"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -56,25 +54,26 @@ func serveNotFound(c echo.Context) error {
 }
 
 func (s *Server) servePage(c echo.Context) error {
-	page := c.Param("page")
-	contentPath := path.Join(s.config.ContentDir, page+".md")
+	pageKey := c.Param("page")
 
-	_, err := os.Stat(contentPath)
+	pages, err := content.DiscoverPages(s.config.ContentDir)
+
 	if err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			return serveNotFound(c)
-		}
-		return fmt.Errorf("error checking file: %w", err)
+		return fmt.Errorf("error discovering pages: %w", err)
 	}
 
-	file, err := content.ParseFile(contentPath)
-	if err != nil {
-		return fmt.Errorf("error processing file: %w", err)
+	page, ok := pages[pageKey]
+
+	if !ok {
+		return serveNotFound(c)
 	}
+
+	allPageTitles := content.AllPageTitles(pages)
 
 	return c.Render(http.StatusOK, "page", templates.PageTemplateData{
-		Title:   page,
-		Content: template.HTML(string(file.ParsedContent)),
+		AllPageTitles: allPageTitles,
+		Title:         page.Title,
+		Content:       template.HTML(string(page.ParsedContent)),
 	})
 }
 

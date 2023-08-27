@@ -3,8 +3,9 @@ package templates
 import "html/template"
 
 type PageTemplateData struct {
-	Title   string
-	Content template.HTML
+	AllPageTitles []string
+	Title         string
+	Content       template.HTML
 }
 
 var pageTemplateContent = `<!DOCTYPE html>
@@ -14,8 +15,17 @@ var pageTemplateContent = `<!DOCTYPE html>
 		<link rel="stylesheet" href="/assets/css/main.css">
 	</head>
 	<body>
-		<h1>{{ .Title }}</h1>
-		{{ .Content }}
+		<nav>
+			<ul>
+			{{ range .AllPageTitles }}
+				<li><a href="/{{ . }}">{{ . }}</a></li>
+			{{ end }}
+			</ul>
+		</nav>
+		<main>
+			<h1>{{ .Title }}</h1>
+			{{ .Content }}
+		</main>
 	</body>
 </html>`
 
