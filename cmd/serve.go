@@ -24,6 +24,6 @@ var serveCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(serveCmd)
 
-	serveCmd.Flags().String("addr", ":8080", "Address to listen on")
-	serveCmd.Flags().Bool("use-bundled-assets", true, "Whether to use bundled assets embedded in the binary")
+	serveCmd.Flags().StringP("addr", "a", ":8080", "Address to listen on")
+	serveCmd.Flags().BoolP("use-bundled-assets", "b", true, "Whether to use bundled assets embedded in the binary")
 }

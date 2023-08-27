@@ -5,6 +5,7 @@ go 1.21.0
 require (
 	github.com/labstack/echo/v4 v4.11.1
 	github.com/lmittmann/tint v1.0.0
+	github.com/otiai10/copy v1.12.0
 	github.com/samber/slog-echo v1.1.0
 	github.com/spf13/cobra v1.7.0
 	github.com/yuin/goldmark v1.5.6
