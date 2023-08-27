@@ -2,6 +2,7 @@ package templates
 
 import (
 	"bufio"
+	"fmt"
 	"html/template"
 	"os"
 
@@ -15,17 +16,17 @@ func OutputAllPagesToDisk(pages map[string]*content.Page, outputDir string) erro
 
 	err := os.MkdirAll(outputDir, 0755)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create output directory: %w", err)
 	}
 
 	allPageTitles := content.AllPageTitles(pages)
 
 	for key, page := range pages {
-		var outputPath = outputDir + key + ".html"
+		outputPath := outputDir + key + ".html"
 
 		f, err := os.Create(outputPath)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to create file %s: %w", outputPath, err)
 		}
 
 		defer f.Close()
@@ -39,18 +40,18 @@ func OutputAllPagesToDisk(pages map[string]*content.Page, outputDir string) erro
 			Backlinks:     page.Backlinks,
 		})
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to execute template: %w", err)
 		}
 
 		err = w.Flush()
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to flush template: %w", err)
 		}
 	}
 
 	err = cp.Copy("pkg/static/static/.", outputDir)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to copy static assets: %w", err)
 	}
 
 	return nil

@@ -18,18 +18,14 @@ var outputCmd = &cobra.Command{
 		contentDir := must(cmd.Flags().GetString("content-dir"))
 
 		pages, err := content.DiscoverPages(contentDir)
-		if err != nil {
-			checkError(err, "failed to discover pages")
-		}
+		checkError(err, "failed to discover pages")
 
 		outputDir := must(cmd.Flags().GetString("output-dir"))
 
 		slog.Info(fmt.Sprintf("discovered %d pages, outputting to %s", len(pages), outputDir))
 
 		err = templates.OutputAllPagesToDisk(pages, outputDir)
-		if err != nil {
-			checkError(err, "failed to output pages")
-		}
+		checkError(err, "failed to output pages")
 
 		slog.Info("done!")
 	},
