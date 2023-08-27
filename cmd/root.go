@@ -50,7 +50,7 @@ func init() {
 		false,
 		"Disable rich logs, even in terminal environments",
 	)
-	rootCmd.PersistentFlags().String("content-dir", "content", "Directory containing content files")
+	rootCmd.PersistentFlags().StringP("content-dir", "c", "content", "Directory containing content files")
 
 	cobra.OnInitialize(setupLogging)
 }

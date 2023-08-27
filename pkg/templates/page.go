@@ -14,6 +14,7 @@ var pageTemplateContent = `<!DOCTYPE html>
 	<head>
 		<title>{{ .Title }}</title>
 		<link rel="stylesheet" href="/assets/css/main.css">
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg">
 	</head>
 	<body>
 		<nav>
