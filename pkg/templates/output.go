@@ -4,9 +4,10 @@ import (
 	"bufio"
 	"html/template"
 	"os"
-	"os/exec"
 
 	"github.com/fogo-sh/almanac/pkg/content"
+
+	cp "github.com/otiai10/copy"
 )
 
 func OutputAllPagesToDisk(pages map[string]*content.Page, outputDir string) error {
@@ -47,7 +48,7 @@ func OutputAllPagesToDisk(pages map[string]*content.Page, outputDir string) erro
 		}
 	}
 
-	err = exec.Command("cp", "-r", "pkg/static/static/.", outputDir).Run()
+	err = cp.Copy("pkg/static/static/.", outputDir)
 	if err != nil {
 		return err
 	}
