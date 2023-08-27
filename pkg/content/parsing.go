@@ -17,6 +17,8 @@ import (
 type Page struct {
 	Title         string
 	Path          string
+	LinksTo       []string
+	Backlinks     []string
 	ParsedContent []byte
 }
 
@@ -38,11 +40,18 @@ func ParsePageFile(path string) (Page, error) {
 		return Page{}, fmt.Errorf("failed to read file: %w", err)
 	}
 
+	var linksTo = make([]string, 0)
+
 	var buf bytes.Buffer
 	if err := goldmark.New(goldmark.WithExtensions(
 		&frontmatter.Extender{},
 		&wikilink.Extender{
-			Resolver: WikiLinkResolver{},
+			Resolver: WikiLinkResolver{
+				recordDestination: func(destination []byte) error {
+					linksTo = append(linksTo, string(destination))
+					return nil
+				},
+			},
 		},
 	)).Convert(content, &buf); err != nil {
 		return Page{}, fmt.Errorf("failed to parse markdown: %w", err)
@@ -52,6 +61,7 @@ func ParsePageFile(path string) (Page, error) {
 
 	return Page{
 		Title:         pageTitle,
+		LinksTo:       linksTo,
 		Path:          path,
 		ParsedContent: buf.Bytes(),
 	}, nil

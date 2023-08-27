@@ -74,6 +74,7 @@ func (s *Server) servePage(c echo.Context) error {
 		AllPageTitles: allPageTitles,
 		Title:         page.Title,
 		Content:       template.HTML(string(page.ParsedContent)),
+		Backlinks:     page.Backlinks,
 	})
 }
 

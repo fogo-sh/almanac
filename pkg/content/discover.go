@@ -6,14 +6,14 @@ import (
 	"sort"
 )
 
-func DiscoverPages(path string) (map[string]Page, error) {
+func DiscoverPages(path string) (map[string]*Page, error) {
 	paths, error := filepath.Glob(filepath.Join(path, "*.md"))
 
 	if error != nil {
 		return nil, fmt.Errorf("failed to glob files: %w", error)
 	}
 
-	pages := make(map[string]Page)
+	pages := make(map[string]*Page)
 
 	for _, path := range paths {
 		page, error := ParsePageFile(path)
@@ -21,13 +21,25 @@ func DiscoverPages(path string) (map[string]Page, error) {
 			return nil, fmt.Errorf("failed to parse page: %w", error)
 		}
 
-		pages[page.Title] = page
+		pages[page.Title] = &page
 	}
+
+	PopulateBacklinks(pages)
 
 	return pages, nil
 }
 
-func AllPageTitles(pages map[string]Page) []string {
+func PopulateBacklinks(pages map[string]*Page) {
+	for _, page := range pages {
+		for _, link := range page.LinksTo {
+			if _, ok := pages[link]; ok {
+				pages[link].Backlinks = append(pages[link].Backlinks, page.Title)
+			}
+		}
+	}
+}
+
+func AllPageTitles(pages map[string]*Page) []string {
 	allPageTitles := make([]string, 0, len(pages))
 	for key := range pages {
 		allPageTitles = append(allPageTitles, key)
