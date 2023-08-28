@@ -1,3 +1,3 @@
 +++
-catagories = ["Contributors"]
+categories = ["Contributors"]
 +++

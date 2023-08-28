@@ -1,18 +1,21 @@
 package templates
 
-import "html/template"
+import (
+	"html/template"
+
+	"github.com/fogo-sh/almanac/pkg/content"
+)
 
 type PageTemplateData struct {
 	AllPageTitles []string
-	Title         string
+	Page          *content.Page
 	Content       template.HTML
-	Backlinks     []string
 }
 
 var pageTemplateContent = `<!DOCTYPE html>
 <html>
 	<head>
-		<title>{{ .Title }}</title>
+		<title>{{ .Page.Title }}</title>
 		<link rel="stylesheet" href="/assets/css/main.css">
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg">
 	</head>
@@ -25,17 +28,29 @@ var pageTemplateContent = `<!DOCTYPE html>
 			</ul>
 		</nav>
 		<main>
-			<h1>{{ .Title }}</h1>
+			<h1>{{ .Page.Title }}</h1>
+
+			{{ if .Page.Meta.YoutubeId }}
+			<iframe
+			  width="100%"
+			  height="600px"
+			  src="https://www.youtube.com/embed/{{ .Page.Meta.YoutubeId }}"
+			  frameborder="0"
+			  allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+			  allowfullscreen></iframe>
+			{{ end }}
+
 			{{ .Content }}
-			{{ if .Backlinks }}
-				<section>
-					<h2>Backlinks</h2>
-					<ul>
-					{{ range .Backlinks }}
-						<li><a href="/{{ . }}">{{ . }}</a></li>
-					{{ end }}
-					</ul>
-				</section>
+
+			{{ if .Page.Backlinks }}
+			<section>
+				<h2>Backlinks</h2>
+				<ul>
+				{{ range .Page.Backlinks }}
+					<li><a href="/{{ . }}">{{ . }}</a></li>
+				{{ end }}
+				</ul>
+			</section>
 			{{ end }}
 		</main>
 	</body>

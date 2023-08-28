@@ -1,5 +1,5 @@
 +++
-catagories = ["Events"]
+categories = ["Events"]
 date = "2023-06-25"
 +++
 

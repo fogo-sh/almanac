@@ -51,3 +51,23 @@ func AllPageTitles(pages map[string]*Page) []string {
 
 	return allPageTitles
 }
+
+func FindRootPage(pages map[string]*Page) (*Page, error) {
+	var rootPage *Page
+
+	for _, page := range pages {
+		if page.Meta.Root {
+			if rootPage != nil {
+				return &Page{}, fmt.Errorf("multiple root pages found")
+			}
+
+			rootPage = page
+		}
+	}
+
+	if rootPage == nil {
+		return &Page{}, fmt.Errorf("no root page found")
+	}
+
+	return rootPage, nil
+}
