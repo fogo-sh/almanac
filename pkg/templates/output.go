@@ -35,9 +35,8 @@ func OutputAllPagesToDisk(pages map[string]*content.Page, outputDir string) erro
 
 		err = PageTemplate.Execute(w, PageTemplateData{
 			AllPageTitles: allPageTitles,
-			Title:         page.Title,
+			Page:          page,
 			Content:       template.HTML(string(page.ParsedContent)),
-			Backlinks:     page.Backlinks,
 		})
 		if err != nil {
 			return fmt.Errorf("failed to execute template: %w", err)

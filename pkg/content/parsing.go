@@ -8,17 +8,27 @@ import (
 	"strings"
 
 	"github.com/yuin/goldmark"
+	"github.com/yuin/goldmark/parser"
 	"go.abhg.dev/goldmark/frontmatter"
 	"go.abhg.dev/goldmark/wikilink"
 
 	"github.com/fogo-sh/almanac/pkg/utils"
 )
 
+type PageMeta struct {
+	Categories []string `toml:"categories"`
+	Date       string   `toml:"date"`
+	Redirect   string   `toml:"redirect"`
+	Root       bool     `toml:"root"`
+	YoutubeId  string   `toml:"youtube_id"`
+}
+
 type Page struct {
 	Title         string
 	Path          string
 	LinksTo       []string
 	Backlinks     []string
+	Meta          PageMeta
 	ParsedContent []byte
 }
 
@@ -42,8 +52,7 @@ func ParsePageFile(path string) (Page, error) {
 
 	var linksTo = make([]string, 0)
 
-	var buf bytes.Buffer
-	if err := goldmark.New(goldmark.WithExtensions(
+	md := goldmark.New(goldmark.WithExtensions(
 		&frontmatter.Extender{},
 		&wikilink.Extender{
 			Resolver: WikiLinkResolver{
@@ -53,8 +62,24 @@ func ParsePageFile(path string) (Page, error) {
 				},
 			},
 		},
-	)).Convert(content, &buf); err != nil {
+	))
+
+	ctx := parser.NewContext()
+
+	var buf bytes.Buffer
+	err = md.Convert(content, &buf, parser.WithContext(ctx))
+	if err != nil {
 		return Page{}, fmt.Errorf("failed to parse markdown: %w", err)
+	}
+
+	var pageMeta PageMeta
+
+	data := frontmatter.Get(ctx)
+
+	if data != nil {
+		if err := data.Decode(&pageMeta); err != nil {
+			return Page{}, fmt.Errorf("failed to decode frontmatter: %w", err)
+		}
 	}
 
 	pageTitle := strings.TrimSuffix(filepath.Base(path), filepath.Ext(path))
@@ -63,6 +88,7 @@ func ParsePageFile(path string) (Page, error) {
 		Title:         pageTitle,
 		LinksTo:       linksTo,
 		Path:          path,
+		Meta:          pageMeta,
 		ParsedContent: buf.Bytes(),
 	}, nil
 }

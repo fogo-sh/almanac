@@ -48,8 +48,10 @@ func (r *Renderer) Render(w io.Writer, name string, data interface{}, c echo.Con
 
 func serveNotFound(c echo.Context) error {
 	return c.Render(http.StatusNotFound, "page", templates.PageTemplateData{
-		Title:   "Not found!",
 		Content: template.HTML("<p>Looks like this page doesn't exist yet</p>"),
+		Page: &content.Page{
+			Title: "Not Found",
+		},
 	})
 }
 
@@ -62,19 +64,29 @@ func (s *Server) servePage(c echo.Context) error {
 		return fmt.Errorf("error discovering pages: %w", err)
 	}
 
-	page, ok := pages[pageKey]
+	var page *content.Page
 
-	if !ok {
-		return serveNotFound(c)
+	if pageKey == "" {
+		page, err = content.FindRootPage(pages)
+
+		if err != nil {
+			return serveNotFound(c)
+		}
+	} else {
+		var ok bool
+		page, ok = pages[pageKey]
+
+		if !ok {
+			return serveNotFound(c)
+		}
 	}
 
 	allPageTitles := content.AllPageTitles(pages)
 
 	return c.Render(http.StatusOK, "page", templates.PageTemplateData{
 		AllPageTitles: allPageTitles,
-		Title:         page.Title,
 		Content:       template.HTML(string(page.ParsedContent)),
-		Backlinks:     page.Backlinks,
+		Page:          page,
 	})
 }
 
@@ -108,6 +120,7 @@ func NewServer(config Config) *Server {
 	}
 
 	echoInst.GET("/:page", server.servePage)
+	echoInst.GET("/", server.servePage)
 
 	echoInst.GET("*", serveNotFound)
 
