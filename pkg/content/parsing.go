@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/parser"
@@ -16,11 +17,11 @@ import (
 )
 
 type PageMeta struct {
-	Categories []string `toml:"categories"`
-	Date       string   `toml:"date"`
-	Redirect   string   `toml:"redirect"`
-	Root       bool     `toml:"root"`
-	YoutubeId  string   `toml:"youtube_id"`
+	Categories []string   `toml:"categories"`
+	Date       *time.Time `toml:"date"`
+	Redirect   string     `toml:"redirect"`
+	Root       bool       `toml:"root"`
+	YoutubeId  string     `toml:"youtube_id"`
 }
 
 type Page struct {
