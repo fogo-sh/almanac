@@ -30,6 +30,12 @@ var pageTemplateContent = `<!DOCTYPE html>
 		<main>
 			<h1>{{ .Page.Title }}</h1>
 
+			{{ if .Page.Meta.Date }}
+			<section>
+				<p>{{ .Page.Meta.Date.Format "Aug 2, 2006" }}</p>
+			</section>
+			{{ end }}
+
 			{{ if .Page.Meta.YoutubeId }}
 			<iframe
 			  width="100%"
