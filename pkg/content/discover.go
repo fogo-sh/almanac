@@ -106,11 +106,9 @@ func AllCategories(pages map[string]*Page) []string {
 		}
 	}
 
-	keys := make([]string, len(categories))
-	i := 0
+	keys := make([]string, 0)
 	for k := range categories {
-		keys[i] = k
-		i++
+		keys = append(keys, k)
 	}
 
 	return keys
