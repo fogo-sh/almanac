@@ -7,7 +7,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/fogo-sh/almanac/pkg/content"
-	"github.com/fogo-sh/almanac/pkg/templates"
 )
 
 var outputCmd = &cobra.Command{
@@ -24,7 +23,7 @@ var outputCmd = &cobra.Command{
 
 		slog.Info(fmt.Sprintf("discovered %d pages, outputting to %s", len(pages), outputDir))
 
-		err = templates.OutputAllPagesToDisk(pages, outputDir)
+		err = content.OutputAllPagesToDisk(pages, outputDir)
 		checkError(err, "failed to output pages")
 
 		slog.Info("done!")

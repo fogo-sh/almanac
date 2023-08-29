@@ -1,4 +1,4 @@
-package templates
+package content
 
 import (
 	"bufio"
@@ -6,12 +6,10 @@ import (
 	"html/template"
 	"os"
 
-	"github.com/fogo-sh/almanac/pkg/content"
-
 	cp "github.com/otiai10/copy"
 )
 
-func OutputAllPagesToDisk(pages map[string]*content.Page, outputDir string) error {
+func OutputAllPagesToDisk(pages map[string]*Page, outputDir string) error {
 	os.RemoveAll(outputDir)
 
 	err := os.MkdirAll(outputDir, 0755)
@@ -19,7 +17,7 @@ func OutputAllPagesToDisk(pages map[string]*content.Page, outputDir string) erro
 		return fmt.Errorf("failed to create output directory: %w", err)
 	}
 
-	allPageTitles := content.AllPageTitles(pages)
+	allPageTitles := AllPageTitles(pages)
 
 	for key, page := range pages {
 		outputPath := outputDir + key + ".html"

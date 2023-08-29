@@ -1,14 +1,12 @@
-package templates
+package content
 
 import (
 	"html/template"
-
-	"github.com/fogo-sh/almanac/pkg/content"
 )
 
 type PageTemplateData struct {
 	AllPageTitles []string
-	Page          *content.Page
+	Page          *Page
 	Content       template.HTML
 }
 
@@ -30,10 +28,16 @@ var pageTemplateContent = `<!DOCTYPE html>
 		<main>
 			<h1>{{ .Page.Title }}</h1>
 
+			{{ if .Page.Meta.Categories }}
+			<p>
+			{{ range .Page.Meta.Categories }}
+				<a href="/$Category:{{ . }}">{{ . }}</a>
+			{{ end }}
+			</p>
+			{{ end }}
+
 			{{ if .Page.Meta.Date }}
-			<section>
-				<p>{{ .Page.Meta.Date.Format "Aug 2, 2006" }}</p>
-			</section>
+			<p>{{ .Page.Meta.Date.Format "Aug 2, 2006" }}</p>
 			{{ end }}
 
 			{{ if .Page.Meta.YoutubeId }}
@@ -69,10 +73,27 @@ type PageData struct {
 	Content template.HTML
 }
 
-func init() {
-	t, err := template.New("page").Parse(pageTemplateContent)
+var linkListingTemplateContent = `<ul>
+{{ range .LinkList }}
+	<li><a href="/{{ . }}">{{ . }}</a></li>
+{{ end }}
+</ul>`
+
+var LinkListingTemplate *template.Template
+
+type LinkListingData struct {
+	LinkList []string
+}
+
+func initTemplate(name string, content string) *template.Template {
+	t, err := template.New(name).Parse(content)
 	if err != nil {
 		panic(err)
 	}
-	PageTemplate = t
+	return t
+}
+
+func init() {
+	PageTemplate = initTemplate("page", pageTemplateContent)
+	LinkListingTemplate = initTemplate("linkListing", linkListingTemplateContent)
 }
