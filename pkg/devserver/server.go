@@ -14,7 +14,6 @@ import (
 
 	"github.com/fogo-sh/almanac/pkg/content"
 	"github.com/fogo-sh/almanac/pkg/static"
-	"github.com/fogo-sh/almanac/pkg/templates"
 )
 
 type Config struct {
@@ -43,11 +42,11 @@ func (r *Renderer) Render(w io.Writer, name string, data interface{}, c echo.Con
 		return fmt.Errorf("unknown template: %s", name)
 	}
 
-	return templates.PageTemplate.Execute(w, data)
+	return content.PageTemplate.Execute(w, data)
 }
 
 func serveNotFound(c echo.Context) error {
-	return c.Render(http.StatusNotFound, "page", templates.PageTemplateData{
+	return c.Render(http.StatusNotFound, "page", content.PageTemplateData{
 		Content: template.HTML("<p>Looks like this page doesn't exist yet</p>"),
 		Page: &content.Page{
 			Title: "Not Found",
@@ -83,7 +82,7 @@ func (s *Server) servePage(c echo.Context) error {
 
 	allPageTitles := content.AllPageTitles(pages)
 
-	return c.Render(http.StatusOK, "page", templates.PageTemplateData{
+	return c.Render(http.StatusOK, "page", content.PageTemplateData{
 		AllPageTitles: allPageTitles,
 		Content:       template.HTML(string(page.ParsedContent)),
 		Page:          page,

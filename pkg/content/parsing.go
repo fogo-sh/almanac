@@ -26,7 +26,7 @@ type PageMeta struct {
 
 type Page struct {
 	Title         string
-	Path          string
+	Path          *string
 	LinksTo       []string
 	Backlinks     []string
 	Meta          PageMeta
@@ -88,7 +88,7 @@ func ParsePageFile(path string) (Page, error) {
 	return Page{
 		Title:         pageTitle,
 		LinksTo:       linksTo,
-		Path:          path,
+		Path:          &path,
 		Meta:          pageMeta,
 		ParsedContent: buf.Bytes(),
 	}, nil
