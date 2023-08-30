@@ -9,6 +9,8 @@ import (
 )
 
 func CreateSpecialPages(pages map[string]*Page) error {
+	specialPages := make([]string, 0)
+
 	pagesByCategory := PagesByCategory(pages)
 	allCategories := AllCategories(pages)
 
@@ -26,12 +28,32 @@ func CreateSpecialPages(pages map[string]*Page) error {
 			return fmt.Errorf("failed to execute template: %w", err)
 		}
 
-		pages[fmt.Sprintf("$Category:%s", category)] = &Page{
-			Title:         fmt.Sprintf("$Category:%s", category),
+		pageTitle := fmt.Sprintf("$Category:%s", category)
+		page := &Page{
+			Title:         pageTitle,
 			LinksTo:       keysOfPagesInCategory,
 			ParsedContent: buf.Bytes(),
 		}
+
+		pages[pageTitle] = page
+		specialPages = append(specialPages, pageTitle)
 	}
+
+	var buf bytes.Buffer
+	err := LinkListingTemplate.Execute(&buf, LinkListingData{
+		LinkList: specialPages,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to execute template: %w", err)
+	}
+
+	page := &Page{
+		Title:         "$SpecialPages",
+		LinksTo:       specialPages,
+		ParsedContent: buf.Bytes(),
+	}
+
+	pages["$SpecialPages"] = page
 
 	return nil
 }
