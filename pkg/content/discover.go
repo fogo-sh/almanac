@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"sort"
+	"strings"
 )
 
 func CreateSpecialPages(pages map[string]*Page) error {
@@ -80,7 +81,7 @@ func AllPageTitles(pages map[string]*Page) []string {
 	}
 
 	sort.Slice(allPageTitles, func(i, j int) bool {
-		return allPageTitles[i] < allPageTitles[j]
+		return strings.ToLower(allPageTitles[i]) < strings.ToLower(allPageTitles[j])
 	})
 
 	return allPageTitles
