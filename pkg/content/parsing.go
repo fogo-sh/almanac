@@ -19,7 +19,7 @@ import (
 type PageMeta struct {
 	Categories []string   `toml:"categories"`
 	Date       *time.Time `toml:"date"`
-	Redirect   string     `toml:"redirect"`
+	Redirect   *string    `toml:"redirect"`
 	Root       bool       `toml:"root"`
 	YoutubeId  string     `toml:"youtube_id"`
 }

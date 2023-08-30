@@ -28,6 +28,10 @@ var pageTemplateContent = `<!DOCTYPE html>
 		<main>
 			<h1>{{ .Page.Title }}</h1>
 
+			{{ if .Page.Meta.Redirect }}
+			<p>↳ <a href="/{{ .Page.Meta.Redirect }}">{{ .Page.Meta.Redirect }}</a></p>
+			{{ end }}
+
 			{{ if .Page.Meta.Categories }}
 			<p>
 			{{ range .Page.Meta.Categories }}
