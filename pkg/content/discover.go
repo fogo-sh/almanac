@@ -90,9 +90,26 @@ func PopulateBacklinks(pages map[string]*Page) {
 	for _, page := range pages {
 		for _, link := range page.LinksTo {
 			if _, ok := pages[link]; ok {
-				pages[link].Backlinks = append(pages[link].Backlinks, page.Title)
+				found := false
+
+				for _, backlink := range pages[link].Backlinks {
+					if backlink == page.Title {
+						found = true
+						break
+					}
+				}
+
+				if !found {
+					pages[link].Backlinks = append(pages[link].Backlinks, page.Title)
+				}
 			}
 		}
+	}
+
+	for _, page := range pages {
+		sort.Slice(page.Backlinks, func(i, j int) bool {
+			return strings.ToLower(page.Backlinks[i]) < strings.ToLower(page.Backlinks[j])
+		})
 	}
 }
 
