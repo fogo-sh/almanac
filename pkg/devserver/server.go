@@ -7,10 +7,14 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+	"os"
 
+	"github.com/gorilla/sessions"
+	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	slogecho "github.com/samber/slog-echo"
+	"golang.org/x/oauth2"
 
 	"github.com/fogo-sh/almanac/pkg/content"
 	"github.com/fogo-sh/almanac/pkg/static"
@@ -20,11 +24,18 @@ type Config struct {
 	Addr             string
 	ContentDir       string
 	UseBundledAssets bool
+
+	UseDiscordOAuth     bool
+	DiscordClientId     string
+	DiscordClientSecret string
+	DiscordCallbackUrl  string
+	SessionSecret       string
 }
 
 type Server struct {
 	echoInst *echo.Echo
 	config   Config
+	oauth    *oauth2.Config
 }
 
 func (s *Server) Start() error {
@@ -90,7 +101,49 @@ func (s *Server) servePage(c echo.Context) error {
 }
 
 func NewServer(config Config) *Server {
+	slog.Debug(
+		"Creating server",
+		"config", config,
+	)
+
 	echoInst := echo.New()
+
+	var oauthConfig *oauth2.Config
+
+	if config.UseDiscordOAuth {
+		if config.DiscordClientId == "" {
+			slog.Error("Discord OAuth enabled but missing client_id value")
+			os.Exit(1)
+		}
+
+		if config.DiscordClientSecret == "" {
+			slog.Error("Discord OAuth enabled but missing client_secret value")
+			os.Exit(1)
+		}
+
+		if config.DiscordCallbackUrl == "" {
+			slog.Error("Discord OAuth enabled but missing callback_url value")
+			os.Exit(1)
+		}
+
+		if config.SessionSecret == "" {
+			slog.Error("Discord OAuth enabled but missing session_secret value")
+			os.Exit(1)
+		}
+
+		oauthConfig = &oauth2.Config{
+			ClientID:     config.DiscordClientId,
+			ClientSecret: config.DiscordClientSecret,
+			Scopes:       []string{"identify"},
+			RedirectURL:  config.DiscordCallbackUrl,
+			Endpoint: oauth2.Endpoint{
+				AuthURL:  "https://discordapp.com/api/oauth2/authorize",
+				TokenURL: "https://discordapp.com/api/oauth2/token",
+			},
+		}
+	}
+
+	echoInst.Use(session.Middleware(sessions.NewCookieStore([]byte(config.SessionSecret))))
 
 	var configuredFrontendFS http.FileSystem
 	if config.UseBundledAssets {
@@ -98,8 +151,6 @@ func NewServer(config Config) *Server {
 	} else {
 		configuredFrontendFS = http.Dir("./pkg/static/")
 	}
-
-	println(config.UseBundledAssets)
 
 	echoInst.Use(middleware.StaticWithConfig(middleware.StaticConfig{
 		Root:       "./static/",
@@ -116,6 +167,7 @@ func NewServer(config Config) *Server {
 	server := &Server{
 		echoInst: echoInst,
 		config:   config,
+		oauth:    oauthConfig,
 	}
 
 	echoInst.GET("/:page", server.servePage)
