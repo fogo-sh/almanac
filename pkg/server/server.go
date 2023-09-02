@@ -1,4 +1,4 @@
-package devserver
+package server
 
 import (
 	"errors"

@@ -4,15 +4,15 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/fogo-sh/almanac/pkg/devserver"
+	"github.com/fogo-sh/almanac/pkg/server"
 )
 
 var serveCmd = &cobra.Command{
 	Use:   "serve",
 	Args:  cobra.NoArgs,
-	Short: "Start the Almanac dev server",
+	Short: "Start the Almanac server",
 	Run: func(cmd *cobra.Command, args []string) {
-		server := devserver.NewServer(devserver.Config{
+		serverInstance := server.NewServer(server.Config{
 			Addr:             must(cmd.Flags().GetString("addr")),
 			ContentDir:       must(cmd.Flags().GetString("content-dir")),
 			UseBundledAssets: must(cmd.Flags().GetBool("use-bundled-assets")),
@@ -24,8 +24,8 @@ var serveCmd = &cobra.Command{
 			DiscordGuildId:      viper.GetString("discord.guild_id"),
 			SessionSecret:       viper.GetString("discord.session_secret"),
 		})
-		err := server.Start()
-		checkError(err, "failed to start dev server")
+		err := serverInstance.Start()
+		checkError(err, "failed to start server")
 	},
 }
 

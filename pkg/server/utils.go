@@ -1,4 +1,4 @@
-package devserver
+package server
 
 import (
 	"github.com/gorilla/sessions"
