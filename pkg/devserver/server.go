@@ -127,6 +127,19 @@ func (s *Server) httpError(err error, c echo.Context) {
 }
 
 func (s *Server) servePage(c echo.Context) error {
+	if s.config.UseDiscordOAuth {
+		sess := getSession(c)
+		loggedIn, ok := sess.Values["loggedIn"].(bool)
+		if !ok || !loggedIn {
+			return c.Render(http.StatusOK, "page", content.PageTemplateData{
+				Content: "<p>You must be logged in to view this page - click <a href=\"/oauth/auth\">here</a> to log in.</p>",
+				Page: &content.Page{
+					Title: "Not Logged In",
+				},
+			})
+		}
+	}
+
 	pageKey := c.Param("page")
 
 	pages, err := content.DiscoverPages(s.config.ContentDir)
