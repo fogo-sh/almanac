@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"log/slog"
 	"os"
@@ -9,6 +10,7 @@ import (
 
 	"github.com/lmittmann/tint"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"golang.org/x/term"
 )
 
@@ -53,6 +55,19 @@ func init() {
 	rootCmd.PersistentFlags().StringP("content-dir", "c", "content", "Directory containing content files")
 
 	cobra.OnInitialize(setupLogging)
+	cobra.OnInitialize(loadConfig)
+}
+
+func loadConfig() {
+	viper.SetConfigName("almanac")
+	viper.SetConfigType("toml")
+	viper.AddConfigPath(".")
+	if err := viper.ReadInConfig(); err != nil {
+		var configFileNotFoundError viper.ConfigFileNotFoundError
+		if !errors.As(err, &configFileNotFoundError) {
+			checkError(err, "failed to read config file")
+		}
+	}
 }
 
 func setupLogging() {
