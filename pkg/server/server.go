@@ -17,8 +17,8 @@ import (
 	slogecho "github.com/samber/slog-echo"
 	"golang.org/x/oauth2"
 
-	"github.com/fogo-sh/almanac/pkg/content"
-	"github.com/fogo-sh/almanac/pkg/static"
+	"pkg.fogo.sh/almanac/pkg/content"
+	"pkg.fogo.sh/almanac/pkg/static"
 )
 
 type Config struct {

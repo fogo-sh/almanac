@@ -1,4 +1,4 @@
-module github.com/fogo-sh/almanac
+module pkg.fogo.sh/almanac
 
 go 1.21.0
 
