@@ -21,6 +21,7 @@ var serveCmd = &cobra.Command{
 			DiscordClientId:     viper.GetString("discord.client_id"),
 			DiscordClientSecret: viper.GetString("discord.client_secret"),
 			DiscordCallbackUrl:  viper.GetString("discord.callback_url"),
+			DiscordGuildId:      viper.GetString("discord.guild_id"),
 			SessionSecret:       viper.GetString("discord.session_secret"),
 		})
 		err := server.Start()

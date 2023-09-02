@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/bwmarrin/discordgo"
 	"github.com/gorilla/sessions"
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
@@ -29,6 +30,7 @@ type Config struct {
 	DiscordClientId     string
 	DiscordClientSecret string
 	DiscordCallbackUrl  string
+	DiscordGuildId      string
 	SessionSecret       string
 }
 
@@ -61,6 +63,65 @@ func serveNotFound(c echo.Context) error {
 		Content: template.HTML("<p>Looks like this page doesn't exist yet</p>"),
 		Page: &content.Page{
 			Title: "Not Found",
+		},
+	})
+}
+
+func (s *Server) oauthAuth(c echo.Context) error {
+	return c.Redirect(http.StatusTemporaryRedirect, s.oauth.AuthCodeURL("state"))
+}
+
+func (s *Server) oauthCallback(c echo.Context) error {
+	code := c.QueryParam("code")
+	state := c.QueryParam("state")
+
+	if state != "state" {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid state")
+	}
+
+	token, err := s.oauth.Exchange(c.Request().Context(), code)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Failed to exchange token: %v", err))
+	}
+
+	discordClient, _ := discordgo.New(fmt.Sprintf("Bearer %s", token.AccessToken))
+
+	guilds, err := discordClient.UserGuilds(100, "", "")
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Failed to fetch guilds: %v", err))
+	}
+
+	for _, guild := range guilds {
+		if guild.ID != s.config.DiscordGuildId {
+			continue
+		}
+
+		sess := getSession(c)
+		sess.Values["loggedIn"] = true
+		sess.Save(c.Request(), c.Response())
+		return c.Redirect(http.StatusTemporaryRedirect, "/")
+	}
+
+	return echo.NewHTTPError(http.StatusForbidden, "You are not in the required server")
+}
+
+func (s *Server) httpError(err error, c echo.Context) {
+	if c.Response().Committed {
+		return
+	}
+
+	code := http.StatusInternalServerError
+	message := err.Error()
+	var he *echo.HTTPError
+	if errors.As(err, &he) {
+		code = he.Code
+		message = he.Message.(string)
+	}
+
+	c.Render(code, "page", content.PageTemplateData{
+		Content: template.HTML(fmt.Sprintf("<p>%s</p>", message)),
+		Page: &content.Page{
+			Title: "An error occurred",
 		},
 	})
 }
@@ -126,6 +187,11 @@ func NewServer(config Config) *Server {
 			os.Exit(1)
 		}
 
+		if config.DiscordGuildId == "" {
+			slog.Error("Discord OAuth enabled but missing guild_id value")
+			os.Exit(1)
+		}
+
 		if config.SessionSecret == "" {
 			slog.Error("Discord OAuth enabled but missing session_secret value")
 			os.Exit(1)
@@ -134,7 +200,7 @@ func NewServer(config Config) *Server {
 		oauthConfig = &oauth2.Config{
 			ClientID:     config.DiscordClientId,
 			ClientSecret: config.DiscordClientSecret,
-			Scopes:       []string{"identify"},
+			Scopes:       []string{"identify", "guilds"},
 			RedirectURL:  config.DiscordCallbackUrl,
 			Endpoint: oauth2.Endpoint{
 				AuthURL:  "https://discordapp.com/api/oauth2/authorize",
@@ -170,8 +236,13 @@ func NewServer(config Config) *Server {
 		oauth:    oauthConfig,
 	}
 
+	echoInst.HTTPErrorHandler = server.httpError
+
 	echoInst.GET("/:page", server.servePage)
 	echoInst.GET("/", server.servePage)
+
+	echoInst.GET("/oauth/auth", server.oauthAuth)
+	echoInst.GET("/oauth/callback", server.oauthCallback)
 
 	echoInst.GET("*", serveNotFound)
 
