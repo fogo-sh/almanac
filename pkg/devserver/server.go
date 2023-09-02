@@ -60,7 +60,7 @@ func (r *Renderer) Render(w io.Writer, name string, data interface{}, c echo.Con
 
 func serveNotFound(c echo.Context) error {
 	return c.Render(http.StatusNotFound, "page", content.PageTemplateData{
-		Content: template.HTML("<p>Looks like this page doesn't exist yet</p>"),
+		Content: "<p>Looks like this page doesn't exist yet</p>",
 		Page: &content.Page{
 			Title: "Not Found",
 		},
@@ -98,7 +98,10 @@ func (s *Server) oauthCallback(c echo.Context) error {
 
 		sess := getSession(c)
 		sess.Values["loggedIn"] = true
-		sess.Save(c.Request(), c.Response())
+		err = sess.Save(c.Request(), c.Response())
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Failed to save session: %v", err))
+		}
 		return c.Redirect(http.StatusTemporaryRedirect, "/")
 	}
 
@@ -118,7 +121,7 @@ func (s *Server) httpError(err error, c echo.Context) {
 		message = he.Message.(string)
 	}
 
-	c.Render(code, "page", content.PageTemplateData{
+	_ = c.Render(code, "page", content.PageTemplateData{
 		Content: template.HTML(fmt.Sprintf("<p>%s</p>", message)),
 		Page: &content.Page{
 			Title: "An error occurred",
