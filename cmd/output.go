@@ -6,7 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/fogo-sh/almanac/pkg/content"
+	"pkg.fogo.sh/almanac/pkg/content"
 )
 
 var outputCmd = &cobra.Command{

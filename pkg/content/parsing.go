@@ -13,7 +13,7 @@ import (
 	"go.abhg.dev/goldmark/frontmatter"
 	"go.abhg.dev/goldmark/wikilink"
 
-	"github.com/fogo-sh/almanac/pkg/utils"
+	"pkg.fogo.sh/almanac/pkg/utils"
 )
 
 type PageMeta struct {

@@ -1,6 +1,6 @@
 package main
 
-import "github.com/fogo-sh/almanac/cmd"
+import "pkg.fogo.sh/almanac/cmd"
 
 func main() {
 	cmd.Execute()
