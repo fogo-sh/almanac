@@ -21,3 +21,5 @@ go.work
 
 output
 almanac.toml
+
+dist/
