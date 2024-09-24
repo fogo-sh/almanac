@@ -10,5 +10,6 @@ RUN CGO_ENABLED=0 go build -o almanac .
 
 FROM scratch
 WORKDIR /config
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /build/almanac /almanac
 ENTRYPOINT ["/almanac", "serve", "--content-dir", "/content"]

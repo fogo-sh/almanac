@@ -18,6 +18,7 @@
 go.work
 
 .idea
+*.swp
 
 output
 almanac.toml
