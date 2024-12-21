@@ -13,6 +13,7 @@ import (
 	"go.abhg.dev/goldmark/frontmatter"
 	"go.abhg.dev/goldmark/wikilink"
 
+	"pkg.fogo.sh/almanac/pkg/content/extensions"
 	"pkg.fogo.sh/almanac/pkg/utils"
 )
 
@@ -33,7 +34,11 @@ type Page struct {
 	ParsedContent []byte
 }
 
-func ParsePageFile(path string) (Page, error) {
+type Parser struct {
+	DiscordUserResolver *extensions.DiscordUserResolver
+}
+
+func (p *Parser) ParsePageFile(path string) (Page, error) {
 	f, err := os.Open(path)
 	if err != nil {
 		return Page{}, fmt.Errorf("failed to open file: %w", err)
@@ -63,6 +68,7 @@ func ParsePageFile(path string) (Page, error) {
 				},
 			},
 		},
+		extensions.NewDiscordMention(p.DiscordUserResolver),
 	))
 
 	ctx := parser.NewContext()
