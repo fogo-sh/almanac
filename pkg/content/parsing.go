@@ -64,7 +64,7 @@ func ParsePageFile(path string) (Page, error) {
 				},
 			},
 		},
-		extensions.NewDiscordMention(),
+		extensions.NewDiscordMention(&extensions.DiscordUserResolver{Cache: map[string]string{"106162668032802816": "nint8835"}}),
 	))
 
 	ctx := parser.NewContext()

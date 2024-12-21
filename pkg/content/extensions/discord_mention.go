@@ -1,6 +1,8 @@
 package extensions
 
 import (
+	"fmt"
+
 	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/ast"
 	"github.com/yuin/goldmark/parser"
@@ -25,7 +27,8 @@ func (m *DiscordMentionNode) Dump(source []byte, level int) {
 		map[string]string{
 			"ID": m.ID,
 		},
-		nil)
+		nil,
+	)
 }
 
 func (m *DiscordMentionNode) Kind() ast.NodeKind {
@@ -59,6 +62,10 @@ func (d discordMentionParser) Parse(parent ast.Node, block text.Reader, pc parse
 		}
 	}
 
+	if !inMention || userId == "" {
+		return nil
+	}
+
 	block.Advance(lineHead + 1)
 
 	return &DiscordMentionNode{
@@ -68,15 +75,21 @@ func (d discordMentionParser) Parse(parent ast.Node, block text.Reader, pc parse
 
 var _ parser.InlineParser = (*discordMentionParser)(nil)
 
-type discordMentionRenderer struct{}
+type discordMentionRenderer struct {
+	resolver *DiscordUserResolver
+}
 
 func (r *discordMentionRenderer) render(w util.BufWriter, source []byte, n ast.Node, entering bool) (ast.WalkStatus, error) {
 	if !entering {
 		return ast.WalkContinue, nil
 	}
 
-	//node := n.(*DiscordMentionNode)
-	w.WriteString("Pretend this is a Discord mention")
+	username, err := r.resolver.Resolve(n.(*DiscordMentionNode).ID)
+	if err != nil {
+		return ast.WalkContinue, fmt.Errorf("failed to resolve Discord mention: %w", err)
+	}
+
+	w.WriteString(username)
 
 	return ast.WalkContinue, nil
 }
@@ -87,13 +100,27 @@ func (r *discordMentionRenderer) RegisterFuncs(reg renderer.NodeRendererFuncRegi
 
 var _ renderer.NodeRenderer = (*discordMentionRenderer)(nil)
 
-type DiscordMention struct{}
-
-func (d *DiscordMention) Extend(m goldmark.Markdown) {
-	m.Renderer().AddOptions(renderer.WithNodeRenderers(util.Prioritized(&discordMentionRenderer{}, 500)))
-	m.Parser().AddOptions(parser.WithInlineParsers(util.Prioritized(discordMentionParser{}, 500)))
+type DiscordMention struct {
+	resolver *DiscordUserResolver
 }
 
-func NewDiscordMention() goldmark.Extender {
-	return &DiscordMention{}
+func (d *DiscordMention) Extend(m goldmark.Markdown) {
+	m.Renderer().AddOptions(renderer.WithNodeRenderers(util.Prioritized(&discordMentionRenderer{resolver: d.resolver}, 500)))
+	m.Parser().AddOptions(parser.WithInlineParsers(util.Prioritized(&discordMentionParser{}, 500)))
+}
+
+type DiscordUserResolver struct {
+	Cache map[string]string
+}
+
+func (r *DiscordUserResolver) Resolve(userId string) (string, error) {
+	if cachedVal, ok := r.Cache[userId]; ok {
+		return cachedVal, nil
+	}
+
+	return "", nil
+}
+
+func NewDiscordMention(resolver *DiscordUserResolver) goldmark.Extender {
+	return &DiscordMention{resolver: resolver}
 }
