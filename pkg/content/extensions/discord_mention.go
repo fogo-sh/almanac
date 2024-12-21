@@ -58,13 +58,14 @@ func (d discordMentionParser) Parse(parent ast.Node, block text.Reader, pc parse
 		if char == '@' {
 			inMention = true
 		} else if inMention && char == '>' {
+			inMention = false
 			break
 		} else if inMention {
 			userId += string(char)
 		}
 	}
 
-	if !inMention || userId == "" {
+	if inMention || userId == "" {
 		return nil
 	}
 
@@ -81,16 +82,22 @@ type discordMentionRenderer struct {
 	resolver *DiscordUserResolver
 }
 
-func (r *discordMentionRenderer) render(w util.BufWriter, source []byte, n ast.Node, entering bool) (ast.WalkStatus, error) {
+func (r *discordMentionRenderer) render(
+	w util.BufWriter, source []byte, n ast.Node, entering bool,
+) (ast.WalkStatus, error) {
 	if !entering {
 		return ast.WalkContinue, nil
 	}
 
-	if r.resolver == nil {
-		w.WriteString(fmt.Sprintf("<@%s>", n.(*DiscordMentionNode).ID))
-	} else {
-		username := r.resolver.Resolve(n.(*DiscordMentionNode).ID)
-		w.WriteString(username)
+	username := fmt.Sprintf("<@%s>", n.(*DiscordMentionNode).ID)
+
+	if r.resolver != nil {
+		username = r.resolver.Resolve(n.(*DiscordMentionNode).ID)
+	}
+
+	_, err := w.WriteString(username)
+	if err != nil {
+		return ast.WalkStop, fmt.Errorf("failed to write string: %w", err)
 	}
 
 	return ast.WalkContinue, nil
@@ -107,8 +114,10 @@ type DiscordMention struct {
 }
 
 func (d *DiscordMention) Extend(m goldmark.Markdown) {
-	m.Renderer().AddOptions(renderer.WithNodeRenderers(util.Prioritized(&discordMentionRenderer{resolver: d.resolver}, 500)))
-	m.Parser().AddOptions(parser.WithInlineParsers(util.Prioritized(&discordMentionParser{}, 500)))
+	m.Renderer().
+		AddOptions(renderer.WithNodeRenderers(util.Prioritized(&discordMentionRenderer{resolver: d.resolver}, 500)))
+	m.Parser().
+		AddOptions(parser.WithInlineParsers(util.Prioritized(&discordMentionParser{}, 500)))
 }
 
 type DiscordUserResolver struct {
