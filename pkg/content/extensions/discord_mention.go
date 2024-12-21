@@ -2,7 +2,9 @@ package extensions
 
 import (
 	"fmt"
+	"log/slog"
 
+	"github.com/bwmarrin/discordgo"
 	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/ast"
 	"github.com/yuin/goldmark/parser"
@@ -84,12 +86,12 @@ func (r *discordMentionRenderer) render(w util.BufWriter, source []byte, n ast.N
 		return ast.WalkContinue, nil
 	}
 
-	username, err := r.resolver.Resolve(n.(*DiscordMentionNode).ID)
-	if err != nil {
-		return ast.WalkContinue, fmt.Errorf("failed to resolve Discord mention: %w", err)
+	if r.resolver == nil {
+		w.WriteString(fmt.Sprintf("<@%s>", n.(*DiscordMentionNode).ID))
+	} else {
+		username := r.resolver.Resolve(n.(*DiscordMentionNode).ID)
+		w.WriteString(username)
 	}
-
-	w.WriteString(username)
 
 	return ast.WalkContinue, nil
 }
@@ -110,15 +112,45 @@ func (d *DiscordMention) Extend(m goldmark.Markdown) {
 }
 
 type DiscordUserResolver struct {
-	Cache map[string]string
+	cache         map[string]string
+	discordClient *discordgo.Session
 }
 
-func (r *DiscordUserResolver) Resolve(userId string) (string, error) {
-	if cachedVal, ok := r.Cache[userId]; ok {
-		return cachedVal, nil
+func (r *DiscordUserResolver) Resolve(userId string) string {
+	if cachedVal, ok := r.cache[userId]; ok {
+		return cachedVal
 	}
 
-	return "", nil
+	slog.Info("Resolving user for the first time, subsequent mentions will be cached...", slog.String("user_id", userId))
+
+	var username string
+	user, err := r.discordClient.User(userId)
+	if err != nil {
+		username = fmt.Sprintf("<@%s>", userId)
+		slog.Error("Failed to resolve user", "error", err)
+	} else {
+		username = user.Username
+	}
+
+	r.cache[userId] = username
+
+	return username
+}
+
+func NewDiscordUserResolver(botToken string) (*DiscordUserResolver, error) {
+	if botToken == "" {
+		return nil, fmt.Errorf("bot token cannot be empty")
+	}
+
+	discordClient, err := discordgo.New("Bot " + botToken)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create Discord client: %w", err)
+	}
+
+	return &DiscordUserResolver{
+		cache:         make(map[string]string),
+		discordClient: discordClient,
+	}, nil
 }
 
 func NewDiscordMention(resolver *DiscordUserResolver) goldmark.Extender {

@@ -8,11 +8,11 @@ import (
 	"strings"
 )
 
-func CreateSpecialPages(pages map[string]*Page) error {
+func (r *Renderer) CreateSpecialPages(pages map[string]*Page) error {
 	specialPages := make([]string, 0)
 
-	pagesByCategory := PagesByCategory(pages)
-	allCategories := AllCategories(pages)
+	pagesByCategory := r.PagesByCategory(pages)
+	allCategories := r.AllCategories(pages)
 
 	for _, category := range allCategories {
 		keysOfPagesInCategory := make([]string, 0, len(pagesByCategory[category]))
@@ -58,7 +58,7 @@ func CreateSpecialPages(pages map[string]*Page) error {
 	return nil
 }
 
-func DiscoverPages(path string) (map[string]*Page, error) {
+func (r *Renderer) DiscoverPages(path string) (map[string]*Page, error) {
 	paths, error := filepath.Glob(filepath.Join(path, "*.md"))
 
 	if error != nil {
@@ -68,7 +68,7 @@ func DiscoverPages(path string) (map[string]*Page, error) {
 	pages := make(map[string]*Page)
 
 	for _, path := range paths {
-		page, error := ParsePageFile(path)
+		page, error := r.ParsePageFile(path)
 		if error != nil {
 			return nil, fmt.Errorf("failed to parse page: %w", error)
 		}
@@ -76,17 +76,17 @@ func DiscoverPages(path string) (map[string]*Page, error) {
 		pages[page.Title] = &page
 	}
 
-	err := CreateSpecialPages(pages)
+	err := r.CreateSpecialPages(pages)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create special pages: %w", err)
 	}
 
-	PopulateBacklinks(pages)
+	r.PopulateBacklinks(pages)
 
 	return pages, nil
 }
 
-func PopulateBacklinks(pages map[string]*Page) {
+func (r *Renderer) PopulateBacklinks(pages map[string]*Page) {
 	for _, page := range pages {
 		for _, link := range page.LinksTo {
 			if _, ok := pages[link]; ok {
@@ -113,7 +113,7 @@ func PopulateBacklinks(pages map[string]*Page) {
 	}
 }
 
-func AllPageTitles(pages map[string]*Page) []string {
+func (r *Renderer) AllPageTitles(pages map[string]*Page) []string {
 	allPageTitles := make([]string, 0, len(pages))
 	for key := range pages {
 		allPageTitles = append(allPageTitles, key)
@@ -126,7 +126,7 @@ func AllPageTitles(pages map[string]*Page) []string {
 	return allPageTitles
 }
 
-func PagesByCategory(pages map[string]*Page) map[string][]*Page {
+func (r *Renderer) PagesByCategory(pages map[string]*Page) map[string][]*Page {
 	pagesByCategory := make(map[string][]*Page)
 
 	for _, page := range pages {
@@ -138,7 +138,7 @@ func PagesByCategory(pages map[string]*Page) map[string][]*Page {
 	return pagesByCategory
 }
 
-func AllCategories(pages map[string]*Page) []string {
+func (r *Renderer) AllCategories(pages map[string]*Page) []string {
 	categories := map[string]struct{}{}
 	for _, page := range pages {
 		for _, category := range page.Meta.Categories {
@@ -154,7 +154,7 @@ func AllCategories(pages map[string]*Page) []string {
 	return keys
 }
 
-func FindRootPage(pages map[string]*Page) (*Page, error) {
+func (r *Renderer) FindRootPage(pages map[string]*Page) (*Page, error) {
 	var rootPage *Page
 
 	for _, page := range pages {

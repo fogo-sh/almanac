@@ -34,7 +34,11 @@ type Page struct {
 	ParsedContent []byte
 }
 
-func ParsePageFile(path string) (Page, error) {
+type Renderer struct {
+	DiscordUserResolver *extensions.DiscordUserResolver
+}
+
+func (r *Renderer) ParsePageFile(path string) (Page, error) {
 	f, err := os.Open(path)
 	if err != nil {
 		return Page{}, fmt.Errorf("failed to open file: %w", err)
@@ -64,7 +68,7 @@ func ParsePageFile(path string) (Page, error) {
 				},
 			},
 		},
-		extensions.NewDiscordMention(&extensions.DiscordUserResolver{Cache: map[string]string{"106162668032802816": "nint8835"}}),
+		extensions.NewDiscordMention(r.DiscordUserResolver),
 	))
 
 	ctx := parser.NewContext()

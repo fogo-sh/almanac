@@ -18,6 +18,7 @@ import (
 	"golang.org/x/oauth2"
 
 	"pkg.fogo.sh/almanac/pkg/content"
+	"pkg.fogo.sh/almanac/pkg/content/extensions"
 	"pkg.fogo.sh/almanac/pkg/static"
 )
 
@@ -32,12 +33,14 @@ type Config struct {
 	DiscordCallbackUrl  string
 	DiscordGuildId      string
 	SessionSecret       string
+	DiscordToken        string
 }
 
 type Server struct {
 	echoInst *echo.Echo
 	config   Config
 	oauth    *oauth2.Config
+	renderer *content.Renderer
 }
 
 func (s *Server) Start() error {
@@ -145,7 +148,7 @@ func (s *Server) servePage(c echo.Context) error {
 
 	pageKey := c.Param("page")
 
-	pages, err := content.DiscoverPages(s.config.ContentDir)
+	pages, err := s.renderer.DiscoverPages(s.config.ContentDir)
 
 	if err != nil {
 		return fmt.Errorf("error discovering pages: %w", err)
@@ -154,7 +157,7 @@ func (s *Server) servePage(c echo.Context) error {
 	var page *content.Page
 
 	if pageKey == "" {
-		page, err = content.FindRootPage(pages)
+		page, err = s.renderer.FindRootPage(pages)
 
 		if err != nil {
 			return serveNotFound(c)
@@ -168,7 +171,7 @@ func (s *Server) servePage(c echo.Context) error {
 		}
 	}
 
-	allPageTitles := content.AllPageTitles(pages)
+	allPageTitles := s.renderer.AllPageTitles(pages)
 
 	return c.Render(http.StatusOK, "page", content.PageTemplateData{
 		AllPageTitles: allPageTitles,
@@ -225,6 +228,11 @@ func NewServer(config Config) *Server {
 		}
 	}
 
+	resolver, err := extensions.NewDiscordUserResolver(config.DiscordToken)
+	if err != nil {
+		slog.Warn("Failed to create Discord user resolver, Discord user mentions will not be resolved", "error", err)
+	}
+
 	echoInst.Use(session.Middleware(sessions.NewCookieStore([]byte(config.SessionSecret))))
 
 	var configuredFrontendFS http.FileSystem
@@ -250,6 +258,7 @@ func NewServer(config Config) *Server {
 		echoInst: echoInst,
 		config:   config,
 		oauth:    oauthConfig,
+		renderer: &content.Renderer{DiscordUserResolver: resolver},
 	}
 
 	echoInst.HTTPErrorHandler = server.httpError
