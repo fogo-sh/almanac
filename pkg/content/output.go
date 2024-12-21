@@ -9,7 +9,7 @@ import (
 	cp "github.com/otiai10/copy"
 )
 
-func (r *Renderer) OutputAllPagesToDisk(pages map[string]*Page, outputDir string) error {
+func (p *Parser) OutputAllPagesToDisk(pages map[string]*Page, outputDir string) error {
 	os.RemoveAll(outputDir)
 
 	err := os.MkdirAll(outputDir, 0755)
@@ -17,7 +17,7 @@ func (r *Renderer) OutputAllPagesToDisk(pages map[string]*Page, outputDir string
 		return fmt.Errorf("failed to create output directory: %w", err)
 	}
 
-	allPageTitles := r.AllPageTitles(pages)
+	allPageTitles := p.AllPageTitles(pages)
 
 	for key, page := range pages {
 		outputPath := outputDir + key + ".html"

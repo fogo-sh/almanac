@@ -40,7 +40,7 @@ type Server struct {
 	echoInst *echo.Echo
 	config   Config
 	oauth    *oauth2.Config
-	renderer *content.Renderer
+	parser   *content.Parser
 }
 
 func (s *Server) Start() error {
@@ -148,7 +148,7 @@ func (s *Server) servePage(c echo.Context) error {
 
 	pageKey := c.Param("page")
 
-	pages, err := s.renderer.DiscoverPages(s.config.ContentDir)
+	pages, err := s.parser.DiscoverPages(s.config.ContentDir)
 
 	if err != nil {
 		return fmt.Errorf("error discovering pages: %w", err)
@@ -157,7 +157,7 @@ func (s *Server) servePage(c echo.Context) error {
 	var page *content.Page
 
 	if pageKey == "" {
-		page, err = s.renderer.FindRootPage(pages)
+		page, err = s.parser.FindRootPage(pages)
 
 		if err != nil {
 			return serveNotFound(c)
@@ -171,7 +171,7 @@ func (s *Server) servePage(c echo.Context) error {
 		}
 	}
 
-	allPageTitles := s.renderer.AllPageTitles(pages)
+	allPageTitles := s.parser.AllPageTitles(pages)
 
 	return c.Render(http.StatusOK, "page", content.PageTemplateData{
 		AllPageTitles: allPageTitles,
@@ -258,7 +258,7 @@ func NewServer(config Config) *Server {
 		echoInst: echoInst,
 		config:   config,
 		oauth:    oauthConfig,
-		renderer: &content.Renderer{DiscordUserResolver: resolver},
+		parser:   &content.Parser{DiscordUserResolver: resolver},
 	}
 
 	echoInst.HTTPErrorHandler = server.httpError
