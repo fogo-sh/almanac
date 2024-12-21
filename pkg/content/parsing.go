@@ -13,6 +13,7 @@ import (
 	"go.abhg.dev/goldmark/frontmatter"
 	"go.abhg.dev/goldmark/wikilink"
 
+	"pkg.fogo.sh/almanac/pkg/content/extensions"
 	"pkg.fogo.sh/almanac/pkg/utils"
 )
 
@@ -63,6 +64,7 @@ func ParsePageFile(path string) (Page, error) {
 				},
 			},
 		},
+		extensions.NewDiscordMention(),
 	))
 
 	ctx := parser.NewContext()
