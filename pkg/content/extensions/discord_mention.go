@@ -158,7 +158,7 @@ func (r *DiscordUserResolver) Resolve(userId string) string {
 	if r.config.CachePath != "" {
 		f, err := os.Create(r.config.CachePath)
 		if err != nil {
-			slog.Error("failed to open cache file", "error", err)
+			slog.Error("Failed to open cache file", "error", err)
 		} else {
 			defer f.Close()
 
