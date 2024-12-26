@@ -1,0 +1,11 @@
+# addr = "localhost:8080"
+# content_dir = "./content"
+# use_bundled_assets = true
+
+# [discord]
+# client_id =
+# client_secret =
+# callback_url =
+# guild_id =
+# session_secret =
+# token =
