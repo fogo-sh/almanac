@@ -1,8 +1,11 @@
 package extensions
 
 import (
+	"encoding/json"
 	"fmt"
 	"log/slog"
+	"os"
+	"time"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/yuin/goldmark"
@@ -120,17 +123,23 @@ func (d *DiscordMention) Extend(m goldmark.Markdown) {
 		AddOptions(parser.WithInlineParsers(util.Prioritized(&discordMentionParser{}, 500)))
 }
 
+type CachedMention struct {
+	Username  string
+	CacheTime time.Time
+}
+
 type DiscordUserResolver struct {
-	cache         map[string]string
+	config        DiscordUserResolverConfig
+	cache         map[string]CachedMention
 	discordClient *discordgo.Session
 }
 
 func (r *DiscordUserResolver) Resolve(userId string) string {
-	if cachedVal, ok := r.cache[userId]; ok {
-		return cachedVal
+	if cachedVal, ok := r.cache[userId]; ok && time.Since(cachedVal.CacheTime) < time.Hour*24*7 {
+		return cachedVal.Username
 	}
 
-	slog.Info("Resolving user for the first time, subsequent mentions will be cached...", slog.String("user_id", userId))
+	slog.Info("Resolving user...", slog.String("user_id", userId))
 
 	var username string
 	user, err := r.discordClient.User(userId)
@@ -141,24 +150,66 @@ func (r *DiscordUserResolver) Resolve(userId string) string {
 		username = user.Username
 	}
 
-	r.cache[userId] = username
+	r.cache[userId] = CachedMention{
+		Username:  username,
+		CacheTime: time.Now(),
+	}
+
+	if r.config.CachePath != "" {
+		f, err := os.Create(r.config.CachePath)
+		if err != nil {
+			slog.Error("Failed to open cache file", "error", err)
+		} else {
+			defer f.Close()
+
+			err = json.NewEncoder(f).Encode(r.cache)
+			if err != nil {
+				slog.Error("Failed to encode cache file", "error", err)
+			}
+		}
+	}
 
 	return username
 }
 
-func NewDiscordUserResolver(botToken string) (*DiscordUserResolver, error) {
-	if botToken == "" {
+type DiscordUserResolverConfig struct {
+	CachePath    string
+	DiscordToken string
+}
+
+func NewDiscordUserResolver(config DiscordUserResolverConfig) (*DiscordUserResolver, error) {
+	var cache map[string]CachedMention
+	if config.CachePath == "" {
+		slog.Warn("No cache path provided, Discord mention details will not be persisted across Almanac executions")
+		cache = make(map[string]CachedMention)
+	} else if _, err := os.Stat(config.CachePath); os.IsNotExist(err) {
+		cache = make(map[string]CachedMention)
+	} else {
+		f, err := os.Open(config.CachePath)
+		if err != nil {
+			return nil, fmt.Errorf("failed to open cache file: %w", err)
+		}
+		defer f.Close()
+
+		err = json.NewDecoder(f).Decode(&cache)
+		if err != nil {
+			return nil, fmt.Errorf("failed to decode cache file: %w", err)
+		}
+	}
+
+	if config.DiscordToken == "" {
 		return nil, fmt.Errorf("bot token cannot be empty")
 	}
 
-	discordClient, err := discordgo.New("Bot " + botToken)
+	discordClient, err := discordgo.New("Bot " + config.DiscordToken)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create Discord client: %w", err)
 	}
 
 	return &DiscordUserResolver{
-		cache:         make(map[string]string),
+		cache:         cache,
 		discordClient: discordClient,
+		config:        config,
 	}, nil
 }
 

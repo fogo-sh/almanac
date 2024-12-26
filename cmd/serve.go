@@ -24,6 +24,7 @@ var serveCmd = &cobra.Command{
 			DiscordGuildId:      viper.GetString("discord.guild_id"),
 			SessionSecret:       viper.GetString("discord.session_secret"),
 			DiscordToken:        viper.GetString("discord.token"),
+			DiscordCachePath:    viper.GetString("discord.cache_path"),
 		})
 		err := serverInstance.Start()
 		checkError(err, "failed to start server")
