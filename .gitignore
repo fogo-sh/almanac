@@ -24,3 +24,5 @@ output
 almanac.toml
 
 dist/
+
+*cache.json
