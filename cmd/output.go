@@ -18,7 +18,12 @@ var outputCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		contentDir := must(cmd.Flags().GetString("content-dir"))
 
-		resolver, err := extensions.NewDiscordUserResolver(viper.GetString("discord.token"))
+		resolver, err := extensions.NewDiscordUserResolver(
+			extensions.DiscordUserResolverConfig{
+				DiscordToken: viper.GetString("discord.token"),
+				CachePath:    viper.GetString("discord.cache_path"),
+			},
+		)
 		if err != nil {
 			slog.Warn("Failed to create Discord user resolver, Discord user mentions will not be resolved", "error", err)
 		}

@@ -34,6 +34,7 @@ type Config struct {
 	DiscordGuildId      string
 	SessionSecret       string
 	DiscordToken        string
+	DiscordCachePath    string
 }
 
 type Server struct {
@@ -228,7 +229,12 @@ func NewServer(config Config) *Server {
 		}
 	}
 
-	resolver, err := extensions.NewDiscordUserResolver(config.DiscordToken)
+	resolver, err := extensions.NewDiscordUserResolver(
+		extensions.DiscordUserResolverConfig{
+			DiscordToken: config.DiscordToken,
+			CachePath:    config.DiscordCachePath,
+		},
+	)
 	if err != nil {
 		slog.Warn("Failed to create Discord user resolver, Discord user mentions will not be resolved", "error", err)
 	}
