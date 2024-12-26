@@ -62,6 +62,9 @@ func loadConfig() {
 	viper.SetConfigName("almanac")
 	viper.SetConfigType("toml")
 	viper.AddConfigPath(".")
+
+	viper.SetDefault("discord.cache_path", "discord_cache.json")
+
 	if err := viper.ReadInConfig(); err != nil {
 		var configFileNotFoundError viper.ConfigFileNotFoundError
 		if !errors.As(err, &configFileNotFoundError) {
