@@ -106,7 +106,7 @@ func (s *Server) oauthCallback(c echo.Context) error {
 		if err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Failed to save session: %v", err))
 		}
-		return c.Redirect(http.StatusTemporaryRedirect, "/")
+		return c.Redirect(http.StatusSeeOther, "/")
 	}
 
 	return echo.NewHTTPError(http.StatusForbidden, "You are not in the required server")
